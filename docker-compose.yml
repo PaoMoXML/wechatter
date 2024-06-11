@@ -1,0 +1,11 @@
+version: '3.6'
+services:
+  wechatter_xmlin:
+    environment:
+      - TZ=Asia/Shanghai
+    build: ./wechatter
+    volumes:
+      - ./wechatter/logs:/usr/local/logs
+    ports:
+      - "4001:4001"
+
