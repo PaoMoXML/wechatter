@@ -1,0 +1,43 @@
+server:
+  servlet:
+    # 工程前缀
+    context-path: /wechatter
+  port: 4001
+
+spring:
+  application:
+    name: wechatter
+
+
+wechatter:
+  # gpt设置
+  openAPIUrl:
+  openAPItoken:
+  webhookUrl:
+  # 命令前缀
+  commandPrefix: "/"
+  # 百度地图api AK
+  baiduAK:
+  # 登出提醒
+  mail:
+    host:
+    port:
+    from:
+    user:
+    pass:
+    sslenbale:
+    to:
+
+
+
+crontasklist:
+  timezone: "Asia/Shanghai"
+  tasks:
+    - taskname: "每天早上七点发送天气预报"
+      enable: true
+      cron: "0 0 7 * * *"
+      commands:
+        - cmd: "weather"
+          args: [ "上海" ]
+          topersonlist: [ "name" ]
+
