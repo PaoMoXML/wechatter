@@ -1,7 +1,8 @@
 package com.xmlin.wechatter.wechatbot.cron;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.cron.CronUtil;
 import cn.hutool.cron.task.Task;
 import cn.hutool.extra.spring.SpringUtil;
@@ -22,13 +23,22 @@ import java.util.*;
 public class CronJobFactory implements CommandLineRunner
 {
 
+    /**
+     * crontasklist.tasks
+     */
     private List<Map<String, Object>> tasks;
+    /**
+     * crontasklist.timezone
+     */
+    private String timezone;
 
-    public void parseCronTasks() {
+    /**
+     * 根据tasks解析任务，并添加到cron任务
+     */
+    private void parseCronTasks() {
         for (Map<String, Object> task : tasks) {
-
+            // 是否启用
             boolean enable = Convert.toBool(task.get("enable")) != null && Convert.toBool(task.get("enable"));
-
             String taskname = String.valueOf(task.get("taskname"));
             //检查是否启用
             if (!enable) {
@@ -37,12 +47,10 @@ public class CronJobFactory implements CommandLineRunner
             else {
                 log.info("开始注册任务：{}", taskname);
             }
+            // cron表达式
             String cron = String.valueOf(task.get("cron"));
-            String timezone = String.valueOf(task.get("timezone"));
-
-            List<String> cmds = new ArrayList<>();
-            List<List<String>> toPersonLists = new ArrayList<>();
-
+            StringBuilder logs = new StringBuilder();
+            // 命令
             Object commands = task.get("commands");
             if (commands instanceof LinkedHashMap<?, ?> mapcCommands) {
                 for (Object value : mapcCommands.values()) {
@@ -51,47 +59,79 @@ public class CronJobFactory implements CommandLineRunner
                             // 命令
                             String cmd = String.valueOf(mapcCommand.get("cmd"));
                             // 入参
-                            LinkedHashMap<?, ?> args = (LinkedHashMap<?, ?>) mapcCommand.get("args");
-                            List<String> argsList = args.values().stream().map(String::valueOf).toList();
-                            // 发送给谁
-                            LinkedHashMap<?, ?> topersonlist = (LinkedHashMap<?, ?>) mapcCommand.get("topersonlist");
-                            List<String> toPersonList = topersonlist.values().stream().map(String::valueOf).toList();
-                            doCmd(cron, cmd, argsList, toPersonList);
-                            cmds.add(cmd);
-                            toPersonLists.add(toPersonList);
+                            List<String> argsList = parseYAMLList("args", mapcCommand);
+                            // 接收人
+                            List<String> toPersonList = parseYAMLList("topersonlist", mapcCommand);
+                            // 添加任务
+                            addCmdToCronJob(cron, cmd, argsList, toPersonList);
+                            logs.append(cmd).append("->").append(toPersonList).append(" ");
                         }
                         catch (Exception e) {
-                            log.warn("任务：" + taskname + "中的子命令：" + value + "配置失败，跳过", e);
+                            log.warn("任务：[" + taskname + "]中的子命令：[" + value + "]配置失败，跳过", e);
                         }
                     }
                 }
 
+                log.info("\n注册任务成功：{} \ncron：{} \ncmds：{}", taskname, cron, logs);
             }
-            log.info("注册任务成功：{} ，cron表达式为：{}，cmds:{} ,toPersonLists:{}", taskname, cron, cmds, toPersonLists);
         }
 
-        // 支持秒级别定时任务
-        TimeZone shanghai = TimeZone.getTimeZone("Asia/Shanghai");
+        // cron任务启动和相关配置
+        if (CharSequenceUtil.isBlank(timezone)) {
+            timezone = "Asia/Shanghai";
+        }
+        TimeZone shanghai = TimeZone.getTimeZone(timezone);
         CronUtil.getScheduler().setTimeZone(shanghai);
+        // 支持秒级别定时任务
         CronUtil.setMatchSecond(true);
         CronUtil.start();
-
     }
 
-    public void doCmd(String cron, String cmd, List<String> argsList, List<String> toPersonList) {
+    /**
+     * 解析YAML文件中的list
+     *
+     * @param key
+     * @param mapcCommand
+     * @return
+     */
+    private List<String> parseYAMLList(String key, LinkedHashMap<?, ?> mapcCommand) {
+        Object objList = mapcCommand.get(key);
+        List<String> argsList;
+        if (objList instanceof LinkedHashMap<?, ?> args) {
+            argsList = args.values().stream().map(String::valueOf).toList();
+        }
+        else if (objList instanceof ArrayList<?> args) {
+            argsList = (List<String>) args;
+        }
+        else {
+            throw new IllegalStateException("yamllist解析失败，key：" + key + "objlist：" + objList);
+        }
 
+        return argsList;
+    }
+
+    /**
+     * 将命令添加到cron任务
+     *
+     * @param cron         cron表达式
+     * @param cmd          命令
+     * @param argsList     入参
+     * @param toPersonList 接收人
+     */
+    public void addCmdToCronJob(String cron, String cmd, List<String> argsList, List<String> toPersonList) {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
-
         CronUtil.schedule(cron, (Task) () -> {
             log.info("执行cmd：{}", cmd);
             CommandFactory commandFactory;
-            if (CollectionUtil.isNotEmpty(argsList)) {
-                commandFactory = new CommandFactory(cmd + " " + String.join(" ", argsList));
+            // 有参
+            if (CollUtil.isNotEmpty(argsList)) {
+                commandFactory = new CommandFactory(cmd + " " + String.join(" ", argsList), null);
             }
+            // 无参
             else {
-                commandFactory = new CommandFactory(cmd);
+                commandFactory = new CommandFactory(cmd, null);
             }
-            if (CollectionUtil.isNotEmpty(toPersonList)) {
+            if (CollUtil.isNotEmpty(toPersonList)) {
                 for (String toUser : toPersonList) {
                     webHookUtils.sendMsg(toUser, commandFactory.doCmd());
                 }
@@ -103,7 +143,7 @@ public class CronJobFactory implements CommandLineRunner
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         parseCronTasks();
     }
 

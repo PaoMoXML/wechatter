@@ -4,8 +4,8 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.xmlin.wechatter.wechatbot.utils.CommandType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * 微博热搜
  */
-@Component
+@Command(type = CommandType.wbhot)
 @Slf4j
 public class WeiBoHot implements Supplier<String>
 {

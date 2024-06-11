@@ -21,7 +21,15 @@ public enum CommandType
     /**
      * 天气
      */
-    weather("天气,天气预报");
+    weather("天气,天气预报"),
+    /**
+     * 随机数
+     */
+    randomint("随机数,随机,roll"),
+    /**
+     * 清空ChatGPT对话
+     */
+    clearGPT("clearGPT,clear,清空,清空对话,新建对话");
 
     private String alias;
 

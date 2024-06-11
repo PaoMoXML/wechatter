@@ -2,18 +2,18 @@ package com.xmlin.wechatter.wechatbot.commands;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import com.xmlin.wechatter.wechatbot.utils.CommandType;
 import com.xmlin.wechatter.wechatbot.utils.IsOrNot;
 import com.xmlin.wechatter.wechatbot.utils.WeatherType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
 import org.springframework.util.ConcurrentReferenceHashMap;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * 天气
  */
-@Component
+@Command(type = CommandType.weather)
 @Slf4j
 public class Weather implements Function<String, String>
 {
@@ -35,9 +35,9 @@ public class Weather implements Function<String, String>
     @Value("${wechatter.baiduAK}")
     private String ak;
 
-    private static String areaFilePath = "/static/weather_district_id.xlsx";
+    private static final String areaFilePath = "/static/weather_district_id.xlsx";
 
-    private Map<String, String> cache = new ConcurrentReferenceHashMap<>();
+    private final Map<String, String> cache = new ConcurrentReferenceHashMap<>();
 
     public String transformAreaName(String areaName) {
         if (cache.isEmpty()) {
@@ -58,7 +58,7 @@ public class Weather implements Function<String, String>
             cache.putAll(collect);
         }
         String areaCode = cache.get(areaName);
-        if (StrUtil.isBlank(areaCode)) {
+        if (CharSequenceUtil.isBlank(areaCode)) {
             log.warn("根据areaName：{}无法获取到对应地区，使用默认地区", areaName);
             areaCode = "320582";
         }
