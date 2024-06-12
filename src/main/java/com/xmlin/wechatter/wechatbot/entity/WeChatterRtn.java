@@ -1,7 +1,7 @@
 package com.xmlin.wechatter.wechatbot.entity;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xmlin.wechatter.wechatbot.utils.WeChatterRtnContentType;
+import com.xmlin.wechatter.wechatbot.enums.WeChatterRtnContentType;
 import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;

@@ -2,7 +2,7 @@ package com.xmlin.wechatter.wechatbot.commands.impl;
 
 import com.xmlin.wechatter.wechatbot.commands.Command;
 import com.xmlin.wechatter.wechatbot.commands.ICommand;
-import com.xmlin.wechatter.wechatbot.utils.CommandType;
+import com.xmlin.wechatter.wechatbot.enums.CommandType;
 
 /**
  * b站热搜

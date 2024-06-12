@@ -6,7 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xmlin.wechatter.wechatbot.commands.Command;
 import com.xmlin.wechatter.wechatbot.commands.ICommand;
-import com.xmlin.wechatter.wechatbot.utils.CommandType;
+import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;

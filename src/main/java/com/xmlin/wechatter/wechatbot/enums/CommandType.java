@@ -1,4 +1,4 @@
-package com.xmlin.wechatter.wechatbot.utils;
+package com.xmlin.wechatter.wechatbot.enums;
 
 import cn.hutool.core.util.EnumUtil;
 import lombok.AllArgsConstructor;

@@ -1,6 +1,6 @@
 package com.xmlin.wechatter.wechatbot.commands;
 
-import com.xmlin.wechatter.wechatbot.utils.CommandType;
+import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.*;

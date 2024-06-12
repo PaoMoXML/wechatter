@@ -2,7 +2,7 @@ package com.xmlin.wechatter.wechatbot.commands;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.xmlin.wechatter.wechatbot.utils.CommandType;
+import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 

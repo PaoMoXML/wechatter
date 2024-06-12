@@ -4,7 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.xmlin.wechatter.wechatbot.chatgpt.ChatGPT;
 import com.xmlin.wechatter.wechatbot.commands.Command;
 import com.xmlin.wechatter.wechatbot.commands.ICommand;
-import com.xmlin.wechatter.wechatbot.utils.CommandType;
+import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import lombok.RequiredArgsConstructor;
 
 /**
