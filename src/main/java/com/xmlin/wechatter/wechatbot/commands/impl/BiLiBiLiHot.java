@@ -1,18 +1,22 @@
 package com.xmlin.wechatter.wechatbot.commands.impl;
 
 import com.xmlin.wechatter.wechatbot.commands.Command;
+import com.xmlin.wechatter.wechatbot.commands.ICommand;
 import com.xmlin.wechatter.wechatbot.utils.CommandType;
-
-import java.util.function.Supplier;
 
 /**
  * b站热搜
  */
 @Command(type = CommandType.bilihot)
-public class BiLiBiLiHot implements Supplier<String>
+public class BiLiBiLiHot implements ICommand
 {
     @Override
-    public String get() {
+    public boolean checkArgs(String args) {
+        return true;
+    }
+
+    @Override
+    public String apply(String s) {
         return null;
     }
 }

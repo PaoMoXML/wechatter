@@ -133,7 +133,7 @@ public class CronJobFactory implements CommandLineRunner
         else {
             commandFactory = new CommandFactory(cmd);
         }
-        if (!commandFactory.checkCommand()) {
+        if (!commandFactory.checkCmd()) {
             throw new IllegalStateException(CharSequenceUtil.format("命令有误，cmd：{}，args：{}", cmd, argsList));
         }
 
@@ -150,7 +150,7 @@ public class CronJobFactory implements CommandLineRunner
                     nextFive.add(DateUtil.format(next, DatePattern.NORM_DATETIME_PATTERN));
                 }
             }
-            log.info("\ncmd：{}->{} 下五次执行时间为：{}", cmd, toPersonList, nextFive);
+            log.info("cmd：{}->{} 下五次执行时间为：{}", cmd, toPersonList, nextFive);
         }
         else {
             throw new IllegalStateException(
@@ -182,6 +182,5 @@ public class CronJobFactory implements CommandLineRunner
     public void run(String... args) {
         parseCronTasks();
     }
-
 
 }
