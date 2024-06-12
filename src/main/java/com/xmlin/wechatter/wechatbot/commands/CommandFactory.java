@@ -2,10 +2,11 @@ package com.xmlin.wechatter.wechatbot.commands;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.xmlin.wechatter.wechatbot.commands.impl.*;
 import com.xmlin.wechatter.wechatbot.utils.CommandType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+
+import java.util.Map;
 
 @Slf4j
 public class CommandFactory
@@ -22,11 +23,8 @@ public class CommandFactory
     private final String userName;
     private final String cmdString;
 
-    private final WeiBoHot weiBoHot = SpringUtil.getBean(WeiBoHot.class);
-    private final Weather weather = SpringUtil.getBean(Weather.class);
-    private final RandomInt randomInt = SpringUtil.getBean(RandomInt.class);
-    private final ClearGTP clearGTP = SpringUtil.getBean(ClearGTP.class);
-    private final SendRemind sendRemind = SpringUtil.getBean(SendRemind.class);
+    private final String commandPrefix = SpringUtil.getProperty("wechatter.commandPrefix");
+    private final Map<CommandType, ICommand> cmdCache = SpringUtil.getBean(CommandCache.class).getCmdCache();
 
     public CommandFactory(String cmdString, String userName) {
         this.cmdString = cmdString;
@@ -50,13 +48,19 @@ public class CommandFactory
         final CommandType command;
         final String commandArgs;
 
-        String commandContent = cmdString.replaceFirst("/", "");
+        String commandContent = cmdString.replaceFirst(commandPrefix, "");
         // 带参数的命令
         if (commandContent.contains(" ")) {
             String[] splitedCommand = commandContent.split(" ", 2);
             if (splitedCommand.length == 2) {
                 command = CommandType.getCommandType(splitedCommand[0]);
-                commandArgs = splitedCommand[1];
+                // clearGPT单独处理
+                if (command == CommandType.clearGPT) {
+                    commandArgs = userName;
+                }
+                else {
+                    commandArgs = splitedCommand[1];
+                }
             }
             else {
                 command = null;
@@ -76,43 +80,22 @@ public class CommandFactory
      *
      * @return
      */
-    public boolean checkCommand() {
+    public boolean checkCmd() {
         if (command == null) {
             throw new IllegalStateException("cmd解析失败：" + cmdString);
         }
-        boolean isValid;
-        switch (command) {
-            case wbhot -> isValid = weiBoHot.checkArgs(null);
-            case weather -> isValid = weather.checkArgs(commandArgs);
-            //                case bilihot ->
-            case randomint -> isValid = randomInt.checkArgs(commandArgs);
-            case clearGPT -> isValid = clearGTP.checkArgs(userName);
-            // 发送消息不需要做额外处理
-            case sendRemind -> isValid = sendRemind.checkArgs(commandArgs);
-            default -> isValid = false;
-        }
-
-        return isValid;
+        return cmdCache.get(command).checkArgs(commandArgs);
     }
 
     public String doCmd() {
         String rtnContent;
-        if (checkCommand()) {
-            switch (command) {
-                case wbhot -> rtnContent = weiBoHot.apply(null);
-                case weather -> rtnContent = weather.apply(commandArgs);
-                //                case bilihot ->
-                case randomint -> rtnContent = randomInt.apply(commandArgs);
-                case clearGPT -> rtnContent = clearGTP.apply(userName);
-                // 发送消息不需要做额外处理
-                case sendRemind -> rtnContent = sendRemind.apply(commandArgs);
-                default -> rtnContent = "不支持的命令";
-            }
+        if (checkCmd()) {
+            rtnContent = cmdCache.get(command).apply(commandArgs);
         }
         else {
             log.error("命令有误：{}，执行命令的用户：{}", cmdString,
                     CharSequenceUtil.isBlank(userName) ? "系统cron执行" : userName);
-            rtnContent = "不支持的命令";
+            rtnContent = "命令有误";
         }
         return rtnContent;
     }
