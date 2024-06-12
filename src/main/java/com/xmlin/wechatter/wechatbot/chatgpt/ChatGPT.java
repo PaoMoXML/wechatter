@@ -17,8 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -75,7 +75,7 @@ public class ChatGPT
 
     }
 
-    private final Map<String, List<MessageEntity>> chatCacheMap = new HashMap<>();
+    private final Map<String, LinkedList<MessageEntity>> chatCacheMap = new HashMap<>();
 
     /**
      * 聊天
@@ -86,11 +86,18 @@ public class ChatGPT
      */
     public String myDoChat(String inputContent, String user) {
         try (OpenAiClient client = OpenAiClient.builder().apiHost(openAPIUrl).apiKey(openAPItoken).build()) {
-            List<MessageEntity> messages = chatCacheMap.computeIfAbsent(user, s -> new ArrayList<>());
-            messages.add(MessageEntity.builder().content(inputContent).name(user).build());
-            ChatEntity configure = ChatEntity.builder().model(CompletionModel.GPT_35_TURBO).messages(messages).build();
+            // 历史消息
+            LinkedList<MessageEntity> historyMessages = chatCacheMap.computeIfAbsent(user, s -> new LinkedList<>());
+            // 用户发送消息
+            addMessage(historyMessages, MessageEntity.builder().content(inputContent).name(user).build());
+
+            ChatEntity configure = ChatEntity.builder().model(CompletionModel.GPT_35_TURBO).messages(historyMessages)
+                    .build();
+            // 发送聊天
             List<ChatChoice> choices = client.createChatCompletion(configure).getChoices();
-            choices.forEach(choice -> messages.add(choice.getMessage()));
+            // 将返回值记录进聊天历史
+            choices.forEach(choice -> addMessage(historyMessages, choice.getMessage()));
+
             return choices.stream().map(chatChoice -> chatChoice.getMessage().getContent())
                     .collect(Collectors.joining("\n"));
         }
@@ -98,6 +105,19 @@ public class ChatGPT
             log.error(e.getMessage(), e);
             return "抱歉，聊天服务暂时不可用。";
         }
+    }
+
+    /**
+     * 控制list不超过50
+     *
+     * @param messages
+     * @param message
+     */
+    private static void addMessage(LinkedList<MessageEntity> messages, MessageEntity message) {
+        if (messages.size() > 50) {
+            messages.removeFirst();
+        }
+        messages.add(message);
     }
 
     public void clearChatCacheMap(String userName) {
