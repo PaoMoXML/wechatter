@@ -39,5 +39,5 @@ crontasklist:
       commands:
         - cmd: "weather"
           args: [ "上海" ]
-          topersonlist: [ "name" ]
+          topersonlist: [ "your name" ]
 

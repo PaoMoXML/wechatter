@@ -150,7 +150,7 @@ public class CronJobFactory implements CommandLineRunner
                     nextFive.add(DateUtil.format(next, DatePattern.NORM_DATETIME_PATTERN));
                 }
             }
-            log.info("\ncmd：{}下五次执行时间为：{}", cmd, nextFive);
+            log.info("\ncmd：{}->{} 下五次执行时间为：{}", cmd, toPersonList, nextFive);
         }
         else {
             throw new IllegalStateException(
@@ -183,11 +183,5 @@ public class CronJobFactory implements CommandLineRunner
         parseCronTasks();
     }
 
-    public static void main(String[] args) {
-        String cron = "0 0 12 * * *";
-        CronExpression parse = CronExpression.parse(cron);
-        LocalDateTime next = parse.next(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
-        System.err.println(DateUtil.format(next, DatePattern.ISO8601_PATTERN));
-    }
 
 }

@@ -1,23 +1,31 @@
 # wechatter
 
 #### 介绍
-配合wechat-webhook使用的系统
+基于 wechatbot-webhook 的微信机器人，支持 GPT 问答、热搜、天气预报
 
 #### 软件架构
-软件架构说明
+
+基于Springboot3.3
 
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1. 使用docker-compose模式启动wechatbot-webhook，修改wechatbot-webhook配置文件
+    1. `ACCEPT_RECVD_MSG_MYSELF=true`
+    2. `RECVD_MSG_API=http://[wechatter ip]:[wechatter port]/wechatter/receive_msg`
+    3. `LOGIN_API_TOKEN=[your token]`
+2. 修改参照[example.yml](src%2Fmain%2Fresources%2Fexample.yml) 创建并配置application.yml
+3. 直接运行`wechatter`jar（需要java17环境）或者使用[docker-compose](docker-compose.yml)运行
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1. 直接聊天会触发ChatGPT
+2. 使用`/[cmd]`会触发命令
+    -[x] 天气查询
+    -[x] 微博热搜
+    -[x] 随机数
+    -[ ] b站热搜
+    -[ ] TODO
 
 #### 参与贡献
 
@@ -25,13 +33,3 @@
 2.  新建 Feat_xxx 分支
 3.  提交代码
 4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
