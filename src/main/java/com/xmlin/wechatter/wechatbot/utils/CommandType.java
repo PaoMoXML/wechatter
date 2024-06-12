@@ -29,7 +29,11 @@ public enum CommandType
     /**
      * 清空ChatGPT对话
      */
-    clearGPT("clearGPT,clear,清空,清空对话,新建对话");
+    clearGPT("clearGPT,clear,清空,清空对话,新建对话"),
+    /**
+     * 发送提醒
+     */
+    sendRemind("sendRemind");
 
     private String alias;
 

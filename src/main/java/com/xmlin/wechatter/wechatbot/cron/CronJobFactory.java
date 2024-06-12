@@ -2,6 +2,8 @@ package com.xmlin.wechatter.wechatbot.cron;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.cron.CronUtil;
 import cn.hutool.cron.task.Task;
@@ -13,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.support.CronExpression;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Configuration
@@ -62,8 +67,10 @@ public class CronJobFactory implements CommandLineRunner
                             List<String> argsList = parseYAMLList("args", mapcCommand);
                             // 接收人
                             List<String> toPersonList = parseYAMLList("topersonlist", mapcCommand);
+                            // 执行检查
+                            CommandFactory commandFactory = checkJobConfig(cron, cmd, argsList, toPersonList);
                             // 添加任务
-                            addCmdToCronJob(cron, cmd, argsList, toPersonList);
+                            addCmdToCronJob(cron, commandFactory, toPersonList);
                             logs.append(cmd).append("->").append(toPersonList).append(" ");
                         }
                         catch (Exception e) {
@@ -110,34 +117,63 @@ public class CronJobFactory implements CommandLineRunner
         return argsList;
     }
 
+    private CommandFactory checkJobConfig(String cron, String cmd, List<String> argsList, List<String> toPersonList) {
+        // 检查发送人
+        if (CollUtil.isEmpty(toPersonList)) {
+            throw new IllegalStateException(CharSequenceUtil.format("cmd：{}，发送人为空", cmd));
+        }
+
+        // 检查命令
+        CommandFactory commandFactory;
+        // 有参
+        if (CollUtil.isNotEmpty(argsList)) {
+            commandFactory = new CommandFactory(cmd + " " + String.join(" ", argsList));
+        }
+        // 无参
+        else {
+            commandFactory = new CommandFactory(cmd);
+        }
+        if (!commandFactory.checkCommand()) {
+            throw new IllegalStateException(CharSequenceUtil.format("命令有误，cmd：{}，args：{}", cmd, argsList));
+        }
+
+        // 输入cron测试
+        if (CronExpression.isValidExpression(cron)) {
+            CronExpression parse = CronExpression.parse(cron);
+            LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
+            List<String> nextFive = new ArrayList<>();
+
+            for (int i = 0; i < 5; i++) {
+                LocalDateTime next = parse.next(now);
+                if (next != null) {
+                    now = next;
+                    nextFive.add(DateUtil.format(next, DatePattern.NORM_DATETIME_PATTERN));
+                }
+            }
+            log.info("\ncmd：{}下五次执行时间为：{}", cmd, nextFive);
+        }
+        else {
+            throw new IllegalStateException(
+                    CharSequenceUtil.format("cron表达式有误，cron：{}", cron, cmd, argsList, toPersonList));
+        }
+        return commandFactory;
+
+    }
+
     /**
      * 将命令添加到cron任务
      *
-     * @param cron         cron表达式
-     * @param cmd          命令
-     * @param argsList     入参
-     * @param toPersonList 接收人
+     * @param cron           cron表达式
+     * @param commandFactory 命令工厂
+     * @param toPersonList   接收人
      */
-    public void addCmdToCronJob(String cron, String cmd, List<String> argsList, List<String> toPersonList) {
+    public void addCmdToCronJob(String cron, CommandFactory commandFactory, List<String> toPersonList) {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
         CronUtil.schedule(cron, (Task) () -> {
-            log.info("执行cmd：{}", cmd);
-            CommandFactory commandFactory;
-            // 有参
-            if (CollUtil.isNotEmpty(argsList)) {
-                commandFactory = new CommandFactory(cmd + " " + String.join(" ", argsList), null);
-            }
-            // 无参
-            else {
-                commandFactory = new CommandFactory(cmd, null);
-            }
-            if (CollUtil.isNotEmpty(toPersonList)) {
-                for (String toUser : toPersonList) {
-                    webHookUtils.sendMsg(toUser, commandFactory.doCmd());
-                }
-            }
-            else {
-                log.warn("命令：{}，发送人为空", cmd);
+            log.info("执行cmd：{}，args：{}，toPersons：{}", commandFactory.getCommand().name(),
+                    commandFactory.getCommandArgs(), toPersonList);
+            for (String toUser : toPersonList) {
+                webHookUtils.sendMsg(toUser, commandFactory.doCmd());
             }
         });
     }
@@ -145,6 +181,13 @@ public class CronJobFactory implements CommandLineRunner
     @Override
     public void run(String... args) {
         parseCronTasks();
+    }
+
+    public static void main(String[] args) {
+        String cron = "0 0 12 * * *";
+        CronExpression parse = CronExpression.parse(cron);
+        LocalDateTime next = parse.next(LocalDateTime.now(ZoneId.of("Asia/Shanghai")));
+        System.err.println(DateUtil.format(next, DatePattern.ISO8601_PATTERN));
     }
 
 }
