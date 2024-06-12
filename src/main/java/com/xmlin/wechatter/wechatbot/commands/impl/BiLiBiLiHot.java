@@ -1,5 +1,6 @@
-package com.xmlin.wechatter.wechatbot.commands;
+package com.xmlin.wechatter.wechatbot.commands.impl;
 
+import com.xmlin.wechatter.wechatbot.commands.Command;
 import com.xmlin.wechatter.wechatbot.utils.CommandType;
 
 import java.util.function.Supplier;

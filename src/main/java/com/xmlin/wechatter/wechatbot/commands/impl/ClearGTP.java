@@ -1,18 +1,18 @@
-package com.xmlin.wechatter.wechatbot.commands;
+package com.xmlin.wechatter.wechatbot.commands.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.xmlin.wechatter.wechatbot.chatgpt.ChatGPT;
+import com.xmlin.wechatter.wechatbot.commands.Command;
+import com.xmlin.wechatter.wechatbot.commands.ICommand;
 import com.xmlin.wechatter.wechatbot.utils.CommandType;
 import lombok.RequiredArgsConstructor;
-
-import java.util.function.UnaryOperator;
 
 /**
  * 清空chatgpt对话
  */
 @Command(type = CommandType.clearGPT)
 @RequiredArgsConstructor
-public class ClearGTP implements UnaryOperator<String>
+public class ClearGTP implements ICommand
 {
     private final ChatGPT chatGPT;
 
@@ -22,5 +22,10 @@ public class ClearGTP implements UnaryOperator<String>
             chatGPT.clearChatCacheMap(userName);
         }
         return "聊天上下文清空成功清空成功！";
+    }
+
+    @Override
+    public boolean checkArgs(String userName) {
+        return CharSequenceUtil.isNotBlank(userName);
     }
 }
