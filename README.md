@@ -1,7 +1,7 @@
 # wechatter
 
 #### 介绍
-基于 wechatbot-webhook 的微信机器人，支持 GPT 问答、热搜、天气预报
+基于 [wechatbot-webhook](https://github.com/danni-cool/wechatbot-webhook) 的微信机器人，支持 GPT 问答、热搜、天气预报
 
 #### 软件架构
 
