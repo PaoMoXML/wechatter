@@ -50,17 +50,11 @@ public class CommandFactory
 
         String commandContent = cmdString.replaceFirst(commandPrefix, "");
         // 带参数的命令
-        if (commandContent.contains(" ")) {
+        if (commandContent.trim().contains(" ")) {
             String[] splitedCommand = commandContent.split(" ", 2);
             if (splitedCommand.length == 2) {
                 command = CommandType.getCommandType(splitedCommand[0]);
-                // clearGPT单独处理
-                if (command == CommandType.clearGPT) {
-                    commandArgs = userName;
-                }
-                else {
-                    commandArgs = splitedCommand[1];
-                }
+                commandArgs = splitedCommand[1];
             }
             else {
                 command = null;
@@ -70,7 +64,12 @@ public class CommandFactory
         // 普通命令
         else {
             command = CommandType.getCommandType(commandContent);
-            commandArgs = null;
+            if (command == CommandType.clearGPT) {
+                commandArgs = userName;
+            }
+            else {
+                commandArgs = null;
+            }
         }
         return Pair.of(command, commandArgs);
     }
@@ -89,14 +88,21 @@ public class CommandFactory
 
     public String doCmd() {
         String rtnContent;
-        if (checkCmd()) {
-            rtnContent = cmdCache.get(command).apply(commandArgs);
+        try {
+            if (checkCmd()) {
+                rtnContent = cmdCache.get(command).apply(commandArgs);
+            }
+            else {
+                log.error("命令有误：{}，执行命令的用户：{}", cmdString,
+                        CharSequenceUtil.isBlank(userName) ? "系统cron执行" : userName);
+                rtnContent = "命令有误";
+            }
         }
-        else {
-            log.error("命令有误：{}，执行命令的用户：{}", cmdString,
-                    CharSequenceUtil.isBlank(userName) ? "系统cron执行" : userName);
+        catch (Exception e) {
             rtnContent = "命令有误";
+            log.error(e.getMessage(), e);
         }
+
         return rtnContent;
     }
 

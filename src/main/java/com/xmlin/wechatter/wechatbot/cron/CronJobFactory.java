@@ -5,6 +5,7 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.cron.CronUtil;
 import cn.hutool.cron.task.Task;
 import cn.hutool.extra.spring.SpringUtil;
@@ -180,7 +181,25 @@ public class CronJobFactory implements CommandLineRunner
 
     @Override
     public void run(String... args) {
+        keepLife();
         parseCronTasks();
+    }
+
+    private static int ONE_MINUTE = 1000 * 60;
+
+    private void keepLife() {
+        WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
+        CronUtil.schedule("0 0 */3 * * *", (Task) () -> {
+            log.info("执行存活保持");
+            try {
+                Thread.sleep(RandomUtil.randomInt(ONE_MINUTE, ONE_MINUTE * 60));
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            webHookUtils.sendMsg("文件传输助手", new CommandFactory("weather 张家港").doCmd());
+        });
+        webHookUtils.sendMsg("文件传输助手", new CommandFactory("weather 张家港").doCmd());
     }
 
 }

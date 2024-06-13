@@ -1,6 +1,7 @@
 package com.xmlin.wechatter.wechatbot.chatgpt;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.EnumUtil;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
@@ -31,10 +32,18 @@ public class ChatGPT
     /**
      * gpt用的接口和token
      */
-    @Value("${wechatter.openAPIUrl}")
-    public String openAPIUrl;
-    @Value("${wechatter.openAPItoken}")
-    public String openAPItoken;
+    @Value("${wechatter.openAIUrl}")
+    private String openAIUrl;
+    @Value("${wechatter.openAIToken}")
+    private String openAIToken;
+    @Value("${wechatter.openAIMaxTokens:1024}")
+    private int openAIMaxTokens;
+    @Value("${wechatter.openAITemperature:0.95}")
+    private Double openAITemperature;
+    @Value("${wechatter.openAITopP:0.75}")
+    private Double openAITopP;
+    @Value("${wechatter.openAIModel:gpt-3.5-turbo}")
+    private String openAIModel;
 
     /**
      * 和ChatGPT聊天
@@ -49,10 +58,10 @@ public class ChatGPT
         Assert.notBlank(inputContent, "输入内容不能为空");
         Assert.notBlank(userName, "用户不能为空");
 
-        HttpRequest post = HttpUtil.createPost(openAPIUrl);
+        HttpRequest post = HttpUtil.createPost(openAIUrl);
 
         post.header("Content-Type", "application/json");
-        post.bearerAuth(openAPItoken);
+        post.bearerAuth(openAIToken);
 
         String toUse =
                 "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"assistant\",\"content\":\"" + inputContent
@@ -85,14 +94,17 @@ public class ChatGPT
      * @return
      */
     public String myDoChat(String inputContent, String user) {
-        try (OpenAiClient client = OpenAiClient.builder().apiHost(openAPIUrl).apiKey(openAPItoken).build()) {
+        try (OpenAiClient client = OpenAiClient.builder().apiHost(openAIUrl).apiKey(openAIToken).build()) {
             // 历史消息
             LinkedList<MessageEntity> historyMessages = chatCacheMap.computeIfAbsent(user, s -> new LinkedList<>());
             // 用户发送消息
             addMessage(historyMessages, MessageEntity.builder().content(inputContent).name(user).build());
 
-            ChatEntity configure = ChatEntity.builder().model(CompletionModel.GPT_35_TURBO).messages(historyMessages)
-                    .build();
+            CompletionModel model = EnumUtil.getBy(CompletionModel.class,
+                    completionModel -> completionModel.getName().equalsIgnoreCase(openAIModel));
+
+            ChatEntity configure = ChatEntity.builder().model(model).maxTokens(openAIMaxTokens)
+                    .temperature(openAITemperature).topP(openAITopP).messages(historyMessages).build();
             // 发送聊天
             List<ChatChoice> choices = client.createChatCompletion(configure).getChoices();
             // 将返回值记录进聊天历史

@@ -11,8 +11,13 @@ spring:
 
 wechatter:
   # gpt设置
-  openAPIUrl:
-  openAPItoken:
+  openAIUrl:
+  openAIToken:
+  openAIMaxTokens:
+  openAITemperature:
+  openAITopP:
+  openAIModel:
+  # webhook地址
   webhookUrl:
   # 命令前缀
   commandPrefix: "/"
