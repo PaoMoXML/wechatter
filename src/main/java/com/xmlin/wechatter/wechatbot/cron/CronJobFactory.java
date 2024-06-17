@@ -18,6 +18,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.support.CronExpression;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -37,6 +38,10 @@ public class CronJobFactory implements CommandLineRunner
      * crontasklist.timezone
      */
     private String timezone;
+
+    private boolean keeplife;
+
+    private static int ONE_MINUTE = 1000 * 60;
 
     /**
      * 根据tasks解析任务，并添加到cron任务
@@ -154,8 +159,7 @@ public class CronJobFactory implements CommandLineRunner
             log.info("cmd：{}->{} 下五次执行时间为：{}", cmd, toPersonList, nextFive);
         }
         else {
-            throw new IllegalStateException(
-                    CharSequenceUtil.format("cron表达式有误，cron：{}", cron, cmd, argsList, toPersonList));
+            throw new IllegalStateException(CharSequenceUtil.format("cron表达式有误，cron：{}", cron));
         }
         return commandFactory;
 
@@ -171,6 +175,7 @@ public class CronJobFactory implements CommandLineRunner
     public void addCmdToCronJob(String cron, CommandFactory commandFactory, List<String> toPersonList) {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
         CronUtil.schedule(cron, (Task) () -> {
+            //            sleepRandomDelaySeconds(cron);
             log.info("执行cmd：{}，args：{}，toPersons：{}", commandFactory.getCommand().name(),
                     commandFactory.getCommandArgs(), toPersonList);
             for (String toUser : toPersonList) {
@@ -179,24 +184,45 @@ public class CronJobFactory implements CommandLineRunner
         });
     }
 
+    private Map<String, Integer> durationNanoCache = new HashMap<>();
+
+    private void sleepRandomDelaySeconds(String cron) {
+        int second = durationNanoCache.computeIfAbsent(cron, s -> {
+            LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
+            LocalDateTime next = CronExpression.parse(s).next(now);
+            Duration between = Duration.between(now, next);
+            return Convert.toInt(between.getSeconds() / 20);
+        });
+        // 可能会让掉线减少？
+        try {
+            Thread.sleep(RandomUtil.randomInt(0, second * 2));
+        }
+        catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void run(String... args) {
-        keepLife();
+        if (keeplife) {
+            keepLife();
+        }
         parseCronTasks();
     }
 
-    private static int ONE_MINUTE = 1000 * 60;
-
+    /**
+     * 每一个小时发送一条消息给 文件传输助手 不知能否让掉线减少
+     */
     private void keepLife() {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
-        CronUtil.schedule("0 0 */3 * * *", (Task) () -> {
-            log.info("执行存活保持");
+        CronUtil.schedule("0 0 */1 * * *", (Task) () -> {
             try {
-                Thread.sleep(RandomUtil.randomInt(ONE_MINUTE, ONE_MINUTE * 60));
+                Thread.sleep(RandomUtil.randomInt(ONE_MINUTE, ONE_MINUTE * 30));
             }
             catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+            log.info("执行存活保持");
             webHookUtils.sendMsg("文件传输助手", new CommandFactory("weather 张家港").doCmd());
         });
         webHookUtils.sendMsg("文件传输助手", new CommandFactory("weather 张家港").doCmd());

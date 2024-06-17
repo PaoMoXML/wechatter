@@ -106,7 +106,7 @@ public class ReceiveMsgController
                 }
                 // 执行聊天
                 else {
-                    rtnContent = chatGPT.myDoChat(contentString, fromName);
+                    rtnContent = chatGPT.myChat(contentString, fromName);
                 }
                 log.info("send---<{}>:<{}>", fromName, rtnContent);
                 return WeChatterRtn.OK().setRtnContent(WeChatterRtnContentType.text, rtnContent).buildRtnString();

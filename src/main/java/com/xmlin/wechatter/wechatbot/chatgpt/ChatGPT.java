@@ -18,10 +18,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -63,9 +63,8 @@ public class ChatGPT
         post.header("Content-Type", "application/json");
         post.bearerAuth(openAIToken);
 
-        String toUse =
-                "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"assistant\",\"content\":\"" + inputContent
-                        + "\"}],\"temperature\":0.7,\"user\":\"" + userName + "\"}";
+        String toUse = "{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"user\",\"content\":\"" + inputContent
+                + "\"}],\"temperature\":0.7,\"user\":\"" + userName + "\"}";
 
         post.body(toUse);
 
@@ -84,7 +83,9 @@ public class ChatGPT
 
     }
 
-    private final Map<String, LinkedList<MessageEntity>> chatCacheMap = new HashMap<>();
+    private final Map<String, LinkedList<MessageEntity>> chatCacheMap = new ConcurrentHashMap<>();
+
+    ThreadLocal<Integer> retryCount = new ThreadLocal<>();
 
     /**
      * 聊天
@@ -93,30 +94,64 @@ public class ChatGPT
      * @param user
      * @return
      */
-    public String myDoChat(String inputContent, String user) {
-        try (OpenAiClient client = OpenAiClient.builder().apiHost(openAIUrl).apiKey(openAIToken).build()) {
-            // 历史消息
-            LinkedList<MessageEntity> historyMessages = chatCacheMap.computeIfAbsent(user, s -> new LinkedList<>());
-            // 用户发送消息
-            addMessage(historyMessages, MessageEntity.builder().content(inputContent).name(user).build());
-
-            CompletionModel model = EnumUtil.getBy(CompletionModel.class,
-                    completionModel -> completionModel.getName().equalsIgnoreCase(openAIModel));
-
-            ChatEntity configure = ChatEntity.builder().model(model).maxTokens(openAIMaxTokens)
-                    .temperature(openAITemperature).topP(openAITopP).messages(historyMessages).build();
-            // 发送聊天
-            List<ChatChoice> choices = client.createChatCompletion(configure).getChoices();
-            // 将返回值记录进聊天历史
-            choices.forEach(choice -> addMessage(historyMessages, choice.getMessage()));
-
-            return choices.stream().map(chatChoice -> chatChoice.getMessage().getContent())
-                    .collect(Collectors.joining("\n"));
+    public String myChat(String inputContent, String user) {
+        retryCount.remove();
+        try {
+            return doMyChat(inputContent, user);
         }
         catch (Exception e) {
             log.error(e.getMessage(), e);
             return "抱歉，聊天服务暂时不可用。";
         }
+    }
+
+    private String doMyChat(String inputContent, String user) {
+        Integer retry = retryCount.get();
+        if (retry == null) {
+            retryCount.set(0);
+            retry = 0;
+        }
+        String rtn = null;
+        do {
+            try (OpenAiClient client = OpenAiClient.builder().apiHost(openAIUrl).apiKey(openAIToken).build()) {
+                // 历史消息
+                LinkedList<MessageEntity> historyMessages = chatCacheMap.computeIfAbsent(user, s -> new LinkedList<>());
+                // 用户发送消息
+                addMessage(historyMessages, MessageEntity.builder().content(inputContent).name(user).build());
+
+                CompletionModel model = EnumUtil.getBy(CompletionModel.class,
+                        completionModel -> completionModel.getName().equalsIgnoreCase(openAIModel));
+
+                ChatEntity configure = ChatEntity.builder().model(model).maxTokens(openAIMaxTokens)
+                        .temperature(openAITemperature).topP(openAITopP).messages(historyMessages).build();
+                // 发送聊天
+                List<ChatChoice> choices = client.createChatCompletion(configure).getChoices();
+                // 将返回值记录进聊天历史
+                choices.forEach(choice -> addMessage(historyMessages, choice.getMessage()));
+
+                rtn = choices.stream().map(chatChoice -> chatChoice.getMessage().getContent())
+                        .collect(Collectors.joining("\n"));
+                break;
+            }
+            catch (Exception e) {
+                // 对于可重试的异常，且重试次数未超过限制，继续重试
+                if (retry < 3) {
+                    retry++;
+                    try {
+                        Thread.sleep((long) Math.pow(2, retry) * 100); // 指数退避策略
+                    }
+                    catch (InterruptedException ex) {
+                        log.error(ex.getMessage(), ex);
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                else {
+                    throw e;
+                }
+            }
+        }
+        while (retry < 3);
+        return rtn;
     }
 
     /**
