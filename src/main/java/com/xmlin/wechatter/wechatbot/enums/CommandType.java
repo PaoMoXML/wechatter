@@ -33,7 +33,11 @@ public enum CommandType
     /**
      * 发送提醒
      */
-    sendRemind("sendRemind");
+    sendRemind("sendRemind"),
+    /**
+     * 切换聊天机器人
+     */
+    switchChatBot("switch,切换,切换聊天机器人");
 
     private String alias;
 

@@ -3,8 +3,8 @@ package com.xmlin.wechatter.wechatbot.controller;
 import cn.hutool.core.util.EnumUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.xmlin.wechatter.wechatbot.chatgpt.ChatGPT;
 import com.xmlin.wechatter.wechatbot.commands.CommandFactory;
+import com.xmlin.wechatter.wechatbot.commands.impl.SwitchChatBot;
 import com.xmlin.wechatter.wechatbot.entity.WeChatterRtn;
 import com.xmlin.wechatter.wechatbot.enums.IsOrNot;
 import com.xmlin.wechatter.wechatbot.enums.MsgType;
@@ -29,7 +29,7 @@ public class ReceiveMsgController
     /**
      * gpt工具类
      */
-    private final ChatGPT chatGPT;
+    private final SwitchChatBot switchChatBot;
 
     /**
      * 邮件工厂
@@ -106,7 +106,7 @@ public class ReceiveMsgController
                 }
                 // 执行聊天
                 else {
-                    rtnContent = chatGPT.myChat(contentString, fromName);
+                    rtnContent = switchChatBot.getToUsedBot().chat(contentString, fromName);
                 }
                 log.info("send---<{}>:<{}>", fromName, rtnContent);
                 return WeChatterRtn.OK().setRtnContent(WeChatterRtnContentType.text, rtnContent).buildRtnString();

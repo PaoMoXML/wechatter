@@ -1,4 +1,4 @@
-package com.xmlin.wechatter.wechatbot.chatgpt;
+package com.xmlin.wechatter.wechatbot.chatgpt.openai;
 
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.EnumUtil;
@@ -8,6 +8,8 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.xmlin.wechatter.wechatbot.chatgpt.ChatBot;
+import com.xmlin.wechatter.wechatbot.chatgpt.IChatBot;
 import lombok.extern.slf4j.Slf4j;
 import org.devlive.sdk.openai.OpenAiClient;
 import org.devlive.sdk.openai.choice.ChatChoice;
@@ -15,6 +17,7 @@ import org.devlive.sdk.openai.entity.ChatEntity;
 import org.devlive.sdk.openai.entity.MessageEntity;
 import org.devlive.sdk.openai.model.CompletionModel;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -24,9 +27,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-@Component
+@ChatBot(botSupplier = "openai")
+@Order(2)
 @Slf4j
-public class ChatGPT
+public class ChatGPT implements IChatBot
 {
 
     /**
@@ -94,7 +98,7 @@ public class ChatGPT
      * @param user
      * @return
      */
-    public String myChat(String inputContent, String user) {
+    public String chat(String inputContent, String user) {
         retryCount.remove();
         try {
             return doMyChat(inputContent, user);
@@ -155,13 +159,13 @@ public class ChatGPT
     }
 
     /**
-     * 控制list不超过50
+     * 控制list不超过30
      *
      * @param messages
      * @param message
      */
     private static synchronized void addMessage(LinkedList<MessageEntity> messages, MessageEntity message) {
-        if (messages.size() > 50) {
+        if (messages.size() > 30) {
             messages.removeFirst();
         }
         messages.add(message);

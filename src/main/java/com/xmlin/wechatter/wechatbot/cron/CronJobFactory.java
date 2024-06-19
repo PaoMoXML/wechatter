@@ -175,7 +175,7 @@ public class CronJobFactory implements CommandLineRunner
     public void addCmdToCronJob(String cron, CommandFactory commandFactory, List<String> toPersonList) {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
         CronUtil.schedule(cron, (Task) () -> {
-            //            sleepRandomDelaySeconds(cron);
+            sleepRandomDelaySeconds(cron);
             log.info("执行cmd：{}，args：{}，toPersons：{}", commandFactory.getCommand().name(),
                     commandFactory.getCommandArgs(), toPersonList);
             for (String toUser : toPersonList) {
@@ -191,7 +191,7 @@ public class CronJobFactory implements CommandLineRunner
             LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
             LocalDateTime next = CronExpression.parse(s).next(now);
             Duration between = Duration.between(now, next);
-            return Convert.toInt(between.getSeconds() / 20);
+            return Convert.toInt(between.getSeconds() / 10);
         });
         // 可能会让掉线减少？
         try {
