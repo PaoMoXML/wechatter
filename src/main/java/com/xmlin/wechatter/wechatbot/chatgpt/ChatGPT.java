@@ -160,7 +160,7 @@ public class ChatGPT
      * @param messages
      * @param message
      */
-    private static void addMessage(LinkedList<MessageEntity> messages, MessageEntity message) {
+    private static synchronized void addMessage(LinkedList<MessageEntity> messages, MessageEntity message) {
         if (messages.size() > 50) {
             messages.removeFirst();
         }

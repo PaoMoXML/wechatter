@@ -1,10 +1,10 @@
 package com.xmlin.wechatter.wechatbot.commands;
 
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Map;
 
@@ -31,8 +31,8 @@ public class CommandFactory
         this.userName = userName;
         // 提取命令和参数的逻辑提取到一个单独的方法中
         Pair<CommandType, String> commandTypeStringPair = parseCommand(cmdString);
-        this.command = commandTypeStringPair.getLeft();
-        this.commandArgs = commandTypeStringPair.getRight();
+        this.command = commandTypeStringPair.getKey();
+        this.commandArgs = commandTypeStringPair.getValue();
     }
 
     public CommandFactory(String cmdString) {
@@ -40,8 +40,8 @@ public class CommandFactory
         this.userName = null;
         // 提取命令和参数的逻辑提取到一个单独的方法中
         Pair<CommandType, String> commandTypeStringPair = parseCommand(cmdString);
-        this.command = commandTypeStringPair.getLeft();
-        this.commandArgs = commandTypeStringPair.getRight();
+        this.command = commandTypeStringPair.getKey();
+        this.commandArgs = commandTypeStringPair.getValue();
     }
 
     private Pair<CommandType, String> parseCommand(String cmdString) {
