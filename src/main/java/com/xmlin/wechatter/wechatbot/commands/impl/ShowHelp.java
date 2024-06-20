@@ -4,7 +4,9 @@ import com.xmlin.wechatter.wechatbot.commands.Command;
 import com.xmlin.wechatter.wechatbot.commands.ICommand;
 import com.xmlin.wechatter.wechatbot.enums.CommandType;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 @Command(type = CommandType.help)
 public class ShowHelp implements ICommand
@@ -18,12 +20,16 @@ public class ShowHelp implements ICommand
     @Override
     public String apply(String s) {
         EnumSet<CommandType> commandTypes = EnumSet.allOf(CommandType.class);
-        StringBuilder stringBuilder = new StringBuilder();
+        List<String> msgs = new ArrayList<>();
         for (CommandType commandType : commandTypes) {
-            stringBuilder.append(String.format("命令：%s 别名：%s 描述：%s %n", commandType.name(), commandType.getAlias(),
-                    commandType.getDescription()));
+            msgs.add(helpMsg(commandType));
         }
-        return stringBuilder.toString();
+        return String.join("-----------\n", msgs);
+    }
+
+    public static String helpMsg(CommandType commandType) {
+        return String.format("☀️命令：%s %n🌙别名：%s %n✨描述：%s %n", commandType.name(), commandType.getAlias(),
+                commandType.getDescription());
     }
 
     public static void main(String[] args) {

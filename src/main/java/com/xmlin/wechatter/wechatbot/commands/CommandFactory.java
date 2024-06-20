@@ -1,11 +1,17 @@
 package com.xmlin.wechatter.wechatbot.commands;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.xmlin.wechatter.wechatbot.commands.impl.ShowHelp;
 import com.xmlin.wechatter.wechatbot.enums.CommandType;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -95,11 +101,11 @@ public class CommandFactory
             else {
                 log.error("命令有误：{}，执行命令的用户：{}", cmdString,
                         CharSequenceUtil.isBlank(userName) ? "系统cron执行" : userName);
-                rtnContent = "命令有误";
+                rtnContent = tryToCorrect("命令格式错误", cmdString);
             }
         }
         catch (Exception e) {
-            rtnContent = "命令有误";
+            rtnContent = tryToCorrect("没有找到命令", cmdString);
             log.error(e.getMessage(), e);
         }
 
@@ -112,5 +118,52 @@ public class CommandFactory
 
     public String getCommandArgs() {
         return commandArgs;
+    }
+
+    /**
+     * 尝试纠错命令，并返回相关示例
+     *
+     * @param errmsg
+     * @param cmdString
+     * @return
+     */
+    public static String tryToCorrect(String errmsg, String cmdString) {
+        EnumSet<CommandType> commandTypes = EnumSet.allOf(CommandType.class);
+        List<Pair<CommandType, Double>> pairList = new ArrayList<>();
+        for (CommandType commandType : commandTypes) {
+            double similar = StrUtil.similar(cmdString, commandType.name());
+            for (String s : commandType.getAlias().split(",")) {
+                double similarAlias = StrUtil.similar(cmdString, s);
+                if (similarAlias > similar) {
+                    similar = similarAlias;
+                }
+            }
+            if (similar > 0) {
+                pairList.add(Pair.of(commandType, similar));
+            }
+        }
+
+        pairList.sort((o1, o2) -> {
+            if (o1.getValue().equals(o2.getValue())) {
+                return 0;
+            }
+            else if (o1.getValue() > o2.getValue()) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        });
+        if (pairList.size() > 3) {
+            pairList = pairList.subList(0, 3);
+        }
+        List<String> correctMsg = new ArrayList<>();
+        for (Pair<CommandType, Double> pair : pairList) {
+            correctMsg.add(ShowHelp.helpMsg(pair.getKey()));
+        }
+        if (CollUtil.isEmpty(correctMsg)) {
+            return "";
+        }
+        return String.format("%s%n最相似的命令是：%n%s", errmsg, String.join("-----------\n", correctMsg));
     }
 }
