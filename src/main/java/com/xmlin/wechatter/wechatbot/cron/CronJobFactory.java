@@ -175,7 +175,7 @@ public class CronJobFactory implements CommandLineRunner
     public void addCmdToCronJob(String cron, CommandFactory commandFactory, List<String> toPersonList) {
         WebHookUtils webHookUtils = SpringUtil.getBean(WebHookUtils.class);
         CronUtil.schedule(cron, (Task) () -> {
-            sleepRandomDelaySeconds(cron);
+//            sleepRandomDelaySeconds(cron);
             log.info("执行cmd：{}，args：{}，toPersons：{}", commandFactory.getCommand().name(),
                     commandFactory.getCommandArgs(), toPersonList);
             for (String toUser : toPersonList) {
@@ -184,18 +184,19 @@ public class CronJobFactory implements CommandLineRunner
         });
     }
 
-    private Map<String, Integer> durationNanoCache = new HashMap<>();
+    //    private Map<String, Integer> durationNanoCache = new HashMap<>();
 
     private void sleepRandomDelaySeconds(String cron) {
-        int second = durationNanoCache.computeIfAbsent(cron, s -> {
-            LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
-            LocalDateTime next = CronExpression.parse(s).next(now);
-            Duration between = Duration.between(now, next);
-            return Convert.toInt(between.getSeconds() / 10);
-        });
+        //        int second = durationNanoCache.computeIfAbsent(cron, s -> {
+        //            LocalDateTime now = LocalDateTime.now(ZoneId.of(timezone));
+        //            LocalDateTime next = CronExpression.parse(s).next(now);
+        //            LocalDateTime next2 = CronExpression.parse(s).next(next);
+        //            Duration between = Duration.between(next, next2);
+        //            return Convert.toInt(between.getSeconds() / 10);
+        //        });
         // 可能会让掉线减少？
         try {
-            Thread.sleep(RandomUtil.randomInt(0, second * 2));
+            Thread.sleep(RandomUtil.randomInt(0, 5000));
         }
         catch (InterruptedException e) {
             throw new RuntimeException(e);

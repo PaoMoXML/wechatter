@@ -31,8 +31,4 @@ public class ShowHelp implements ICommand
         return String.format("☀️命令：%s %n🌙别名：%s %n✨描述：%s %n", commandType.name(), commandType.getAlias(),
                 commandType.getDescription());
     }
-
-    public static void main(String[] args) {
-        System.err.println(new ShowHelp().apply(""));
-    }
 }

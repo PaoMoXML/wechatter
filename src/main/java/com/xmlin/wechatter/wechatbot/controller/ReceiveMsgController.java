@@ -56,6 +56,11 @@ public class ReceiveMsgController
         MsgType by = EnumUtil.getBy(MsgType.class, msgType -> type.equals(msgType.getType()));
 
         JSONObject sourceJson = JSON.parseObject(source);
+        //        log.info("type:{}",type);
+        //        log.info("content:{}",content);
+        //        log.info("source:{}",source);
+        //        log.info("isMentioned:{}",isMentioned);
+        //        log.info("isMsgFromSelf:{}",isMsgFromSelf);
 
         if (by != null) {
             // 群相关
