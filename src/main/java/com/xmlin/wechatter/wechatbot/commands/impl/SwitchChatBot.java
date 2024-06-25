@@ -22,15 +22,13 @@ public class SwitchChatBot implements ICommand
 
     private final Map<String, IChatBot> botSupplierCacheMap;
 
-    private final List<IChatBot> chatBotList;
-
     private final LoopingListIterator<IChatBot> loopingListIterator;
 
     private IChatBot toUsedBot;
 
     SwitchChatBot(ChatBotCache chatBotCache) {
         this.botSupplierCacheMap = chatBotCache.getBotSupplierCacheMap();
-        this.chatBotList = chatBotCache.getChatBotList();
+        List<IChatBot> chatBotList = chatBotCache.getChatBotList();
         this.toUsedBot = chatBotList.get(0);
         loopingListIterator = new LoopingListIterator<>(chatBotList);
     }
@@ -53,7 +51,7 @@ public class SwitchChatBot implements ICommand
                 botSupplierName = commandMergedAnnotation.getString("botSupplier");
                 currentBot = next;
             }
-            while (currentBot == toUsedBot);
+            while (currentBot == toUsedBot && loopingListIterator.size() > 1);
 
             toUsedBot = currentBot;
             return "切换至供应商：" + botSupplierName;

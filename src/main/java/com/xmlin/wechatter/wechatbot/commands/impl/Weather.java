@@ -73,7 +73,6 @@ public class Weather implements ICommand
      */
     @Override
     public String apply(String districtId) {
-
         try {
             districtId = validateAndTransformDistrictId(districtId);
 

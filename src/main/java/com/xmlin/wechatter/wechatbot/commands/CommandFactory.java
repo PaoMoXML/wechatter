@@ -131,9 +131,11 @@ public class CommandFactory
         EnumSet<CommandType> commandTypes = EnumSet.allOf(CommandType.class);
         List<Pair<CommandType, Double>> pairList = new ArrayList<>();
         for (CommandType commandType : commandTypes) {
+            // 相似程度
             double similar = StrUtil.similar(cmdString, commandType.name());
-            for (String s : commandType.getAlias().split(",")) {
-                double similarAlias = StrUtil.similar(cmdString, s);
+            // 别名相似度
+            for (String alias : commandType.getAlias().split(",")) {
+                double similarAlias = StrUtil.similar(cmdString, alias);
                 if (similarAlias > similar) {
                     similar = similarAlias;
                 }
@@ -143,6 +145,7 @@ public class CommandFactory
             }
         }
 
+        // 排序
         pairList.sort((o1, o2) -> {
             if (o1.getValue().equals(o2.getValue())) {
                 return 0;
