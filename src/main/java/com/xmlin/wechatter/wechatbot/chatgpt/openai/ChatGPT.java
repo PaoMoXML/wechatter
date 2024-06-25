@@ -18,7 +18,6 @@ import org.devlive.sdk.openai.entity.MessageEntity;
 import org.devlive.sdk.openai.model.CompletionModel;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -98,15 +97,10 @@ public class ChatGPT implements IChatBot
      * @param user
      * @return
      */
+    @Override
     public String chat(String inputContent, String user) {
         retryCount.remove();
-        try {
-            return doMyChat(inputContent, user);
-        }
-        catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return "抱歉，聊天服务暂时不可用。";
-        }
+        return doMyChat(inputContent, user);
     }
 
     private String doMyChat(String inputContent, String user) {
