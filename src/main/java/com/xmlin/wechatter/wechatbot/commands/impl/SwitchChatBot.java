@@ -46,7 +46,8 @@ public class SwitchChatBot implements ICommand
             // 保证切换肯定是切换成不一样的供应商
             do {
                 IChatBot next = loopingListIterator.next();
-                MergedAnnotations mergedAnnotations = MergedAnnotations.from(next.getClass());
+                MergedAnnotations mergedAnnotations = MergedAnnotations.from(next.getClass(),
+                        MergedAnnotations.SearchStrategy.TYPE_HIERARCHY);
                 MergedAnnotation<ChatBot> commandMergedAnnotation = mergedAnnotations.get(ChatBot.class);
                 botSupplierName = commandMergedAnnotation.getString("botSupplier");
                 currentBot = next;

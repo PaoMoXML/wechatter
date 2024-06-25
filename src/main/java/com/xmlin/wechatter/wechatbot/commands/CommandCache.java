@@ -25,7 +25,8 @@ public class CommandCache
         for (Map.Entry<String, ICommand> stringICommandEntry : beansOfCommand.entrySet()) {
             ICommand cmd = stringICommandEntry.getValue();
             try {
-                MergedAnnotations mergedAnnotations = MergedAnnotations.from(cmd.getClass());
+                MergedAnnotations mergedAnnotations = MergedAnnotations.from(cmd.getClass(),
+                        MergedAnnotations.SearchStrategy.TYPE_HIERARCHY);
                 MergedAnnotation<Command> commandMergedAnnotation = mergedAnnotations.get(Command.class);
                 CommandType type = commandMergedAnnotation.getEnum("type", CommandType.class);
                 cmdCache.put(type, cmd);

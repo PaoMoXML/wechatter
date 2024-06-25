@@ -28,7 +28,8 @@ public class ChatBotCache
         for (Map.Entry<String, IChatBot> stringIChatBotEntry : chatBotMap.entrySet()) {
             IChatBot chatBot = stringIChatBotEntry.getValue();
             // 在类上搜索注解
-            MergedAnnotations mergedAnnotations = MergedAnnotations.from(chatBot.getClass());
+            MergedAnnotations mergedAnnotations = MergedAnnotations.from(chatBot.getClass(),
+                    MergedAnnotations.SearchStrategy.TYPE_HIERARCHY);
             MergedAnnotation<ChatBot> commandMergedAnnotation = mergedAnnotations.get(ChatBot.class);
             // 获取注解的botSupplier属性值
             String botSupplier = commandMergedAnnotation.getString("botSupplier");
