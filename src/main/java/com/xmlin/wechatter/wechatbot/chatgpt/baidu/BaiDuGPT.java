@@ -2,6 +2,7 @@ package com.xmlin.wechatter.wechatbot.chatgpt.baidu;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Pair;
+import cn.hutool.http.HttpException;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
@@ -43,11 +44,11 @@ public class BaiDuGPT implements IChatBot
         HttpResponse response = HttpUtil.createPost(String.format(url, getToken())).body(baiDuAIMessages.toString())
                 .execute();
         if (!response.isOk()) {
-            throw new RuntimeException("Unexpected code " + response);
+            throw new HttpException("Unexpected code " + response);
         }
         JSONObject jsonObject = JSON.parseObject(response.body());
         String result = jsonObject.getString("result");
-        baiDuAIMessages.add(new BaiDuAIMessage("assistant", "result"));
+        baiDuAIMessages.add(new BaiDuAIMessage("assistant", result));
         return result;
     }
 
